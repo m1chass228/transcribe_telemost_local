@@ -1,31 +1,57 @@
-import json
 import os
+import json
 from src.config_loader import cfg
 
-def write_to_excel(raw_results):
-    """
-    Заглушка: выводит результат анализа в консоль.
-    raw_results: список строк от Ollama (результаты по каждому чанку)
-    """
-    print("\n" + "="*50)
-    print("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ АНАЛИЗА (ЗАГЛУШКА)")
-    print("="*50)
+def write_to_excel(data):
+    # Если пришел словарь {"rows": [...]}, вытаскиваем сам список
+    if isinstance(data, dict):
+        rows = data.get('rows', [])
+    else:
+        rows = data
 
-    # Объединяем результаты всех чанков для вывода
-    full_output = "\n".join(raw_results)
+    print("\n" + "="*60)
+    print("📋 РЕЗУЛЬТАТЫ АНАЛИЗА")
+    print("="*60)
 
-    print(full_output)
+    if not rows:
+        print("Задач не найдено.")
+        print("="*60 + "\n")
+        return
 
-    print("="*50)
+    for idx, row in enumerate(rows, 1):
+        # Если вдруг в список попала строка, обрабатываем её безопасно
+        if isinstance(row, str):
+            task = row
+            assignee = "unknown"
+            deadline = "—"
+            details = "Ошибка: данные получены строкой"
+        else:
+            task     = row.get('task') or '—'
+            assignee = row.get('assignee') or 'unknown'
+            deadline = row.get('deadline') or '—'
+            details  = row.get('details') or ''
 
-    # Давай сохраним это в лог-файл, чтобы данные не пропали, если консоль очистится
-    output_folder = os.path.dirname(cfg.get('PATHS', 'output_excel'))
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+        print(f"{idx:>3}. [{assignee}] {task}")
+        if deadline and deadline != '—':
+            print(f"       📅 {deadline}")
+        if details:
+            print(f"       └─ {details}")
 
-    debug_txt = os.path.join(output_folder, "last_analysis_debug.txt")
-    with open(debug_txt, "w", encoding="utf-8") as f:
-        f.write(full_output)
+    print("-" * 60)
+    print(f"Всего задач: {len(rows)}")
+    print("="*60)
 
-    print(f"Сырой вывод также сохранен в: {debug_txt}")
-    print("="*50 + "\n")
+    # Сохраняем JSON для отладки
+    try:
+        output_path = cfg.get('PATHS', 'output_excel', fallback='output/tasks.json')
+        output_folder = os.path.dirname(output_path)
+        
+        if output_folder and not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        debug_path = os.path.join(output_folder or '.', "last_analysis_debug.json")
+        with open(debug_path, 'w', encoding='utf-8') as f:
+            json.dump(rows, f, ensure_ascii=False, indent=2)
+        print(f"💾 Данные сохранены в: {debug_path}\n")
+    except Exception as e:
+        print(f"⚠️ Не удалось сохранить файл: {e}")

@@ -1,147 +1,157 @@
+# src/transcribe.py
 import os
-import time
-import hashlib
-import json
+import re
+import sys
+import subprocess
 import logging
-import configparser
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-
-# Импортируем наши модули из папки src
+from collections import Counter
 from src.config_loader import cfg
-from src.audio import extract_audio
-from src.transcribe import run_whisper
-from src.analyzer import analyze_meeting
-from src.excel_gen import write_to_excel
 
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[logging.StreamHandler()]
-)
+HF_TOKEN = ""
+os.environ["HF_TOKEN"] = HF_TOKEN
 
-def get_file_hash(file_path):
-    """Считает MD5 хеш файла блоками по 64кб (безопасно для ОЗУ)."""
-    hasher = hashlib.md5()
-    try:
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
-    except Exception as e:
-        logging.error(f"Ошибка при расчете хеша: {e}")
-        return None
 
-def is_already_processed(file_hash):
-    db_path = cfg.get('PATHS', 'db_path')
-    if not os.path.exists(db_path):
-        return False
-    with open(db_path, 'r', encoding='utf-8') as f:
-        try:
-            db = json.load(f)
-            return file_hash in db
-        except:
-            return False
+def clean_transcript(txt_path):
+    with open(txt_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
 
-def mark_as_processed(file_hash, filename):
-    db_path = cfg.get('PATHS', 'db_path')
-    db = {}
-    if os.path.exists(db_path):
-        with open(db_path, 'r', encoding='utf-8') as f:
-            try: db = json.load(f)
-            except: db = {}
+    original_count = len(lines)
 
-    db[file_hash] = {
-        "filename": filename,
-        "processed_at": time.strftime("%Y-%m-%d %H:%M:%S")
+    def extract_text(line):
+        return re.sub(r'\[[\d:.,\s>-]+\]', '', line).strip()
+
+    texts       = [extract_text(l) for l in lines]
+    text_counts = Counter(t for t in texts if t)
+    total_lines = len([t for t in texts if t])
+
+    spam_threshold = max(5, int(total_lines * 0.03))
+    spam_phrases   = {
+        phrase for phrase, count in text_counts.items()
+        if count > spam_threshold
     }
-    with open(db_path, 'w', encoding='utf-8') as f:
-        json.dump(db, f, indent=4, ensure_ascii=False)
 
-def process_file(file_path):
-    """Основной пайплайн обработки одного файла."""
-    filename = os.path.basename(file_path)
+    if spam_phrases:
+        logging.warning(f"Обнаружен спам ({len(spam_phrases)} фраз), удаляю")
 
-    # 1. Проверка хеша
-    f_hash = get_file_hash(file_path)
-    if not f_hash or is_already_processed(f_hash):
-        logging.info(f"Пропускаю (уже обработан или ошибка): {filename}")
-        return
+    cleaned      = []
+    prev_text    = None
+    repeat_count = 0
+    MAX_REPEATS  = 1
 
-    logging.info(f"Начинаю обработку: {filename}")
-    start_time = time.time()
+    for line in lines:
+        text = extract_text(line)
+
+        if not text:
+            cleaned.append(line)
+            continue
+        if text in spam_phrases:
+            continue
+        if text == prev_text:
+            repeat_count += 1
+            if repeat_count > MAX_REPEATS:
+                continue
+        else:
+            repeat_count = 0
+
+        cleaned.append(line)
+        prev_text = text
+
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.writelines(cleaned)
+
+    removed = original_count - len(cleaned)
+    logging.info(f"Очистка: {original_count} → {len(cleaned)} строк (удалено {removed})")
+
+
+def run_gigaam(wav_path: str) -> str:
+    """
+    Запускает GigaAM в отдельном subprocess.
+    После завершения дочернего процесса вся память (torch) освобождается
+    автоматически — Ollama получает чистую RAM.
+    """
+    if not wav_path or not os.path.exists(wav_path):
+        raise FileNotFoundError(f"WAV файл не найден: {wav_path}")
+
+    output_prefix = wav_path.rsplit('.', 1)[0]
+    txt_path      = output_prefix + ".txt"
+
+    # Путь к воркеру — рядом с этим файлом
+    worker_script = os.path.join(os.path.dirname(__file__), '_gigaam_worker.py')
+
+    if not os.path.exists(worker_script):
+        raise FileNotFoundError(f"Worker не найден: {worker_script}")
+
+    model_revision = cfg.get('GIGAAM', 'model', fallback='e2e_rnnt')
+
+    env = {
+        **os.environ,
+        'HF_TOKEN':        HF_TOKEN,
+        'GIGAAM_REVISION': model_revision,
+    }
+
+    logging.info(f"Запускаю GigaAM worker (отдельный процесс)...")
 
     try:
-        # 2. Извлечение аудио
-        wav_path = extract_audio(file_path)
-        if not wav_path: raise Exception("Ошибка на этапе FFmpeg")
-
-        # 3. Транскрибация
-        # Здесь память будет занята Whisper
-        txt_path = run_whisper(
-            wav_path,
-            cfg.get('PATHS', 'bin_path'),
-            cfg.get('PATHS', 'model_path')
+        subprocess.run(
+            [sys.executable, worker_script, wav_path, txt_path],
+            check=True, text=True, env=env
         )
+        logging.info("Ожидание освобождения системной памяти...")
+        import time
+        time.sleep(3) # Даем ОС время на сборку мусора
+        
+        # Системная команда очистки (может потребовать время, но эффективна)
+        # subprocess.run(["purge"]) # Работает только на macOS, чистит дисковый кэш в RAM
+        # --------------------
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"GigaAM worker упал с кодом {e.returncode}")
 
-        # Удаляем временный WAV сразу после транскрибации, чтобы освободить место на SSD
-        if os.path.exists(wav_path):
-            os.remove(wav_path)
+    if not os.path.exists(txt_path):
+        raise FileNotFoundError(f"GigaAM не создал файл: {txt_path}")
 
-        # 4. Анализ (Ollama / Qwen)
-        # Здесь Whisper уже закрыт, память свободна для LLM
-        analysis_results = analyze_meeting(txt_path)
+    if os.path.getsize(txt_path) == 0:
+        raise RuntimeError(f"GigaAM создал пустой файл: {txt_path}")
 
-        # 5. Сохранение (Заглушка в консоль + лог)
-        write_to_excel(analysis_results)
+    clean_transcript(txt_path)
+    logging.info(f"✅ GigaAM завершён: {os.path.basename(txt_path)}")
+    return txt_path
 
-        # 6. Фиксация успеха
-        mark_as_processed(f_hash, filename)
 
-        duration = (time.time() - start_time) / 60
-        logging.info(f"✅ Успешно завершено за {duration:.2f} мин: {filename}")
+def run_whisper(wav_path, bin_path, model_path):
+    import subprocess as sp
+    output_prefix = wav_path.rsplit('.', 1)[0]
+    txt_path      = output_prefix + ".txt"
+    language      = cfg.get('WHISPER', 'language', fallback='ru')
+    vad_model     = "./whisper.cpp/models/ggml-silero-v6.2.0.bin"
 
-    except Exception as e:
-        logging.error(f"❌ Критическая ошибка при обработке {filename}: {e}")
+    cmd = [
+        bin_path, "-m", model_path, "-f", wav_path,
+        "-l", language, "--output-txt", "-of", output_prefix,
+        "--threads", "8",
+        "--vad", "--vad-model", vad_model,
+        "--no-speech-thold", "0.6",
+        "--no-fallback",
+        "--entropy-thold", "2.8",
+    ]
 
-class TelemostWatcher(FileSystemEventHandler):
-    def on_created(self, event):
-        if not event.is_directory and event.src_path.endswith(('.webm', '.mp4', '.mkv')):
-            logging.info(f"✨ Обнаружен новый файл: {os.path.basename(event.src_path)}")
-            # Небольшая пауза, чтобы файл успел дозаписаться/скопироваться
-            time.sleep(3)
-            process_file(event.src_path)
+    logging.info("Запускаю Whisper.cpp...")
+    sp.run(cmd, check=True, text=True)
 
-if __name__ == "__main__":
-    input_dir = cfg.get('PATHS', 'input_folder')
+    if os.path.exists(txt_path):
+        clean_transcript(txt_path)
+        logging.info(f"Whisper завершён: {os.path.basename(txt_path)}")
+        return txt_path
+    else:
+        raise FileNotFoundError("Whisper не создал txt-файл")
 
-    if not os.path.exists(input_dir):
-        logging.error(f"Папка ввода не найдена: {input_dir}")
-        exit(1)
 
-    logging.info("--- Бот-секретарь запущен и готов к работе ---")
-    logging.info(f"Слежу за: {input_dir}")
+def transcribe_audio(wav_path: str) -> str:
+    engine = cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').strip().lower()
+    logging.info(f"Запуск транскрипции через → {engine.upper()}")
 
-    # Сначала обрабатываем всё, что уже лежит в папке
-    existing_files = [os.path.join(input_dir, f) for f in os.listdir(input_dir)
-                      if f.endswith(('.webm', '.mp4', '.mkv'))]
-
-    if existing_files:
-        logging.info(f"Найдено {len(existing_files)} существующих файлов. Начинаю проверку...")
-        for f_path in existing_files:
-            process_file(f_path)
-
-    # Затем переходим в режим ожидания новых файлов
-    event_handler = TelemostWatcher()
-    observer = Observer()
-    observer.schedule(event_handler, input_dir, recursive=False)
-    observer.start()
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logging.info("Stopping...")
-        observer.stop()
-    observer.join()
+    if engine == "gigaam":
+        return run_gigaam(wav_path)
+    else:
+        bin_path   = cfg.get('WHISPER', 'bin_path')
+        model_path = cfg.get('WHISPER', 'model_path')
+        return run_whisper(wav_path, bin_path, model_path)
