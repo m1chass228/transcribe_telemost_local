@@ -4,107 +4,100 @@ import sys
 import subprocess
 import logging
 import time
+from pathlib import Path
 from collections import Counter
 from utils.config_loader import cfg
 
 logger = logging.getLogger(__name__)
 
-HF_TOKEN = cfg.get('GIGAAM', 'hf_token', fallback="")
-os.environ["HF_TOKEN"] = HF_TOKEN
-
-def clean_transcript(txt_path):
-    """Очистка текста от галлюцинаций и повторов (спам-фильтр)"""
-    if not os.path.exists(txt_path):
+def clean_transcript(txt_path: Path):
+    """Очистка текста от галлюцинаций и серийных повторов"""
+    if not txt_path.exists():
         return
 
-    with open(txt_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+    lines = txt_path.read_text(encoding='utf-8').splitlines()
+    if not lines:
+        return
 
     original_count = len(lines)
 
-    def extract_text(line):
-        # Удаляем временные метки [00:00:00]
-        return re.sub(r'\[[\d:.,\s>-]+\]', '', line).strip()
+    def get_pure_text(line):
+        # Убираем таймстампы [00:00:00] и лишние пробелы
+        return re.sub(r'\[[\d:.,\s>-]+\]', '', line).strip().lower()
 
-    texts = [extract_text(l) for l in lines]
-    text_counts = Counter(t for t in texts if t)
-    total_lines = len([t for t in texts if t])
-
-    # Динамический порог спама
-    spam_threshold = max(5, int(total_lines * 0.03))
-    spam_phrases = {
-        phrase for phrase, count in text_counts.items()
-        if count > spam_threshold
-    }
-
-    if spam_phrases:
-        logger.warning(f"│   [ SPAM ] Обнаружено {len(spam_phrases)} аномальных повторов")
+    # 1. Фильтр глобального спама (галлюцинации модели)
+    text_counts = Counter(get_pure_text(l) for l in lines if get_pure_text(l))
+    # Если фраза повторяется аномально часто для всей встречи
+    spam_threshold = max(10, int(len(lines) * 0.05)) 
+    spam_phrases = {ph for ph, count in text_counts.items() if count > spam_threshold}
 
     cleaned = []
     prev_text = None
-    repeat_count = 0
-    MAX_REPEATS = 1
+    repeat_in_row = 0
 
     for line in lines:
-        text = extract_text(line)
-        if not text:
-            cleaned.append(line)
+        pure = get_pure_text(line)
+        if not pure:
             continue
-        if text in spam_phrases:
+            
+        # Удаляем если это глобальный спам
+        if pure in spam_phrases:
             continue
-        if text == prev_text:
-            repeat_count += 1
-            if repeat_count > MAX_REPEATS:
+            
+        # Удаляем если это локальный повтор (подряд)
+        if pure == prev_text:
+            repeat_in_row += 1
+            if repeat_in_row >= 1: # Больше 1 повтора подряд — удаляем
                 continue
         else:
-            repeat_count = 0
-
+            repeat_in_row = 0
+            
         cleaned.append(line)
-        prev_text = text
+        prev_text = pure
 
-    with open(txt_path, 'w', encoding='utf-8') as f:
-        f.writelines(cleaned)
-
+    txt_path.write_text('\n'.join(cleaned), encoding='utf-8')
+    
     removed = original_count - len(cleaned)
-    logger.info(f"│   [ CLEAN ] Строк: {original_count} -> {len(cleaned)} (removed: {removed})")
+    if removed > 0:
+        logger.info(f"│   [ CLEAN ] Строк: {original_count} -> {len(cleaned)} (удалено: {removed})")
 
+def run_gigaam(wav_path: Path) -> Path:
+    txt_path = wav_path.with_suffix(".txt")
+    # Путь к воркеру относительно текущего файла
+    worker_script = Path(__file__).parent / '_gigaam_worker.py'
 
-def run_gigaam(wav_path: str) -> str:
-    output_prefix = wav_path.rsplit('.', 1)[0]
-    txt_path = output_prefix + ".txt"
-    worker_script = os.path.join(os.path.dirname(__file__), '_gigaam_worker.py')
-
-    if not os.path.exists(worker_script):
+    if not worker_script.exists():
         raise FileNotFoundError(f"Worker не найден: {worker_script}")
 
+    hf_token = cfg.get('GIGAAM', 'hf_token', fallback="")
     model_revision = cfg.get('GIGAAM', 'model', fallback='e2e_rnnt')
-    env = {**os.environ, 'HF_TOKEN': HF_TOKEN, 'GIGAAM_REVISION': model_revision}
+    
+    # Передаем только нужные переменные окружения
+    env = os.environ.copy()
+    env.update({'HF_TOKEN': hf_token, 'GIGAAM_REVISION': model_revision})
 
-    logger.info(f"╒══ Запуск GigaAM")
-    logger.info(f"│   Режим: Subprocess (изоляция RAM)")
-
+    logger.info(f"╒══ Запуск GigaAM (Subprocess)")
+    
     try:
-        # Запускаем воркер и ждем завершения
+        # Для 2-часовых файлов ставим большой timeout или убираем его
         subprocess.run(
-            [sys.executable, worker_script, wav_path, txt_path],
-            check=True, text=True, env=env
+            [sys.executable, str(worker_script), str(wav_path), str(txt_path)],
+            check=True, env=env, capture_output=True, text=True
         )
         
-        # КРИТИЧЕСКИ ВАЖНО для 8GB: пауза перед запуском Ollama
-        logger.info("│   [ MEM ] Ожидание выгрузки весов из RAM...")
-        time.sleep(3) 
+        # ОСВОБОЖДЕНИЕ ПАМЯТИ: важный костыль для систем с 8ГБ RAM
+        # Даем ОС время очистить кэш после закрытия процесса воркера
+        time.sleep(2) 
 
-        if not os.path.exists(txt_path) or os.path.getsize(txt_path) == 0:
-            raise RuntimeError("Воркер не создал файл или файл пуст")
+        if not txt_path.exists() or txt_path.stat().st_size == 0:
+            raise RuntimeError("Файл транскрипции пуст или не создан")
 
         clean_transcript(txt_path)
-        logger.info(f"┕━━ [ DONE ] Транскрипция завершена")
         return txt_path
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"│   [ FAIL ] GigaAM worker crashed (code: {e.returncode})")
+        logger.error(f"│   [ FAIL ] GigaAM Error Output: {e.stderr}")
         raise
-
 
 def run_whisper(wav_path, bin_path, model_path):
     output_prefix = wav_path.rsplit('.', 1)[0]
@@ -142,13 +135,27 @@ def run_whisper(wav_path, bin_path, model_path):
         logger.error("│   [ FAIL ] Whisper.cpp вернул ошибку")
         raise
 
-
-def transcribe_audio(wav_path: str) -> str:
+def transcribe_audio(wav_path_str: str) -> str:
+    """Точка входа для транскрибации"""
+    wav_path = Path(wav_path_str)
     engine = cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').strip().lower()
     
+    logger.info(f"│   [ STEP 2/4 ] Транскрибация: {engine}")
+    
     if engine == "gigaam":
-        return run_gigaam(wav_path)
+        result_path = run_gigaam(wav_path)
     else:
-        bin_path = cfg.get('WHISPER', 'bin_path')
-        model_path = cfg.get('WHISPER', 'model_path')
-        return run_whisper(wav_path, bin_path, model_path)
+        #result_path = run_whisper(wav_path, ...)
+        pass
+        
+    return str(result_path)
+
+# def transcribe_audio(wav_path: str) -> str:
+#     engine = cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').strip().lower()
+    
+#     if engine == "gigaam":
+#         return run_gigaam(wav_path)
+#     else:
+#         bin_path = cfg.get('WHISPER', 'bin_path')
+#         model_path = cfg.get('WHISPER', 'model_path')
+#         return run_whisper(wav_path, bin_path, model_path)

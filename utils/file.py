@@ -45,14 +45,3 @@ def wait_for_file_stability(file_path, stable_limit=6, interval=5):
         except Exception as e:
             logger.error(f"│   [ ERR ] Ошибка при ожидании файла: {e}")
             return False
-        
-def get_video_date(file_path: Path) -> datetime.datetime:
-    """Вынос логики парсинга даты."""
-    # Улучшенная регулярка для DD.MM.YY или DD.MM.YYYY
-    date_match = re.search(r'(\d{2})\.(\d{2})\.(\d{2,4})', file_path.name)
-    if date_match:
-        day, month, year = date_match.groups()
-        year = int(year) + 2000 if len(year) == 2 else int(year)
-        return datetime.datetime(year, int(month), int(day))
-    
-    return datetime.datetime.fromtimestamp(file_path.stat().st_mtime)

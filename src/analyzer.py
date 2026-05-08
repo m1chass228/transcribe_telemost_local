@@ -7,6 +7,18 @@ from utils.logs import get_preview_limit
 
 logger = logging.getLogger(__name__)
 
+def _deduplicate_tasks(rows):
+    """Удаляет почти идентичные задачи, возникшие из-за overlap чанков"""
+    unique_tasks = []
+    seen = set()
+    for row in rows:
+        # Создаем ключ из ответственного и нормализованного названия задачи
+        key = f"{row['assignee_code']}_{row['task'].lower().strip()}"
+        if key not in seen:
+            unique_tasks.append(row)
+            seen.add(key)
+    return unique_tasks
+
 def analyze_meeting(txt_file):
     # Загружаем настройки с приведением типов
     model = cfg.get('OLLAMA', 'model', fallback='llama3.2:3b')
@@ -25,17 +37,14 @@ def analyze_meeting(txt_file):
 
     # Разбиваем на чанки
     chunks = []
-    start = 0
-    while start < len(text):
-        end = min(start + c_size, len(text))
-        chunks.append(text[start:end])
-        start += (c_size - overlap)
+    for i in range(0, len(text), c_size - overlap):
+        chunks.append(text[i:i + c_size])
 
-    logger.info(f"»»» Подготовка: {len(chunks)} чанков. Модель: {model}")
+    logger.info(f"»»» Подготовка: {len(chunks)} чанков. Модель: {model} (ctx: {n_ctx})")
 
     all_rows = []
     system_instruction = cfg.get('OLLAMA', 'prompt')
-    client = ollama.Client(timeout=120)
+    client = ollama.Client(timeout=180)
 
     for i, chunk in enumerate(chunks):
         limit = get_preview_limit()
@@ -95,4 +104,9 @@ def analyze_meeting(txt_file):
             logger.error(f"│   ╰─ [ CRIT ] Критическая ошибка: {e}")
 
     logger.info(f"┕━━ Завершено. Всего извлечено: {len(all_rows)}")
-    return {"rows": all_rows}
+
+    # Дедупликация перед возвратом
+    final_rows = _deduplicate_tasks(all_rows)
+    logger.info(f"┕━━ Анализ завершен. Найдено всего: {len(all_rows)}, уникальных: {len(final_rows)}")
+    
+    return {"rows": final_rows}

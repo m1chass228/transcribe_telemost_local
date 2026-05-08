@@ -1,55 +1,64 @@
 import subprocess
-import os
 import logging
+from pathlib import Path
 from utils.config_loader import cfg
 
 logger = logging.getLogger(__name__)
 
-def extract_audio(input_video):
+def extract_audio(input_video_str: str) -> str:
     """
     Извлекает аудиодорожку из видео с помощью FFmpeg.
-    Конвертирует в 16kHz, mono, pcm_s16le (стандарт для GigaAM/Whisper).
+    Конвертирует в 16kHz, mono, pcm_s16le.
     """
-    video_filename = os.path.basename(input_video)
-    output_wav = input_video.rsplit('.', 1)[0] + "_temp.wav"
+    input_path = Path(input_video_str)
+    # Создаем временный wav рядом с оригиналом
+    output_wav = input_path.with_name(f"{input_path.stem}_temp.wav")
 
     logger.info(f"╒══ Извлечение аудио")
-    logger.info(f"│   Source: {video_filename}")
+    logger.info(f"│   Source: {input_path.name}")
 
-    # Команда FFmpeg:
-    # -y: перезаписывать файл если существует
-    # -ar 16000: частота дискретизации 16кГц
-    # -ac 1: моно
-    # -c:a pcm_s16le: кодек
+    # -vn: отключить видео (ускоряет процесс)
+    # -sn: отключить субтитры
+    # -y: перезапись
     cmd = [
-        'ffmpeg', '-y', '-i', input_video,
-        '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le',
-        output_wav
+        'ffmpeg', '-y', 
+        '-i', str(input_path),
+        '-vn',                # Полностью игнорировать видеопоток
+        '-sn',                # Игнорировать субтитры
+        '-dn',                # Игнорировать потоки данных
+        '-ar', '16000', 
+        '-ac', '1', 
+        '-c:a', 'pcm_s16le',
+        str(output_wav)
     ]
 
     try:
-        # Запускаем процесс, скрывая лишний вывод FFmpeg
-        subprocess.run(
+        # Запускаем процесс
+        result = subprocess.run(
             cmd, 
             check=True, 
             stdout=subprocess.DEVNULL, 
-            stderr=subprocess.PIPE # Захватываем ошибки для логов
+            stderr=subprocess.PIPE
         )
 
-        if not os.path.exists(output_wav):
-            raise FileNotFoundError("FFmpeg завершился без ошибок, но выходной файл не создан")
+        if not output_wav.exists():
+            raise FileNotFoundError("FFmpeg завершился успешно, но выходной файл отсутствует.")
 
-        file_size_mb = os.path.getsize(output_wav) / (1024 * 1024)
+        file_size_mb = output_wav.stat().st_size / (1024 * 1024)
         logger.info(f"│   [ DONE ] WAV готов ({file_size_mb:.2f} MB)")
-        logger.info(f"┕━━ Путь: {os.path.basename(output_wav)}")
+        logger.info(f"┕━━ Путь: {output_wav.name}")
         
-        return output_wav
+        return str(output_wav)
 
+    except FileNotFoundError:
+        logger.error("│   [ FAIL ] FFmpeg не найден в системе. Установите его и добавьте в PATH.")
+        return None
     except subprocess.CalledProcessError as e:
-        # Если FFmpeg вернул ошибку, вытаскиваем детали
-        err_msg = e.stderr.decode().split('\n')[-2] if e.stderr else "Unknown FFmpeg error"
-        logger.error(f"│   [ FAIL ] FFmpeg: {err_msg}")
+        # Берем последние пару строк лога для контекста
+        err_out = e.stderr.decode(errors='replace').strip().split('\n')
+        last_error = err_out[-1] if err_out else "Unknown error"
+        logger.error(f"│   [ FAIL ] FFmpeg: {last_error}")
         return None
     except Exception as e:
-        logger.error(f"│   [ FAIL ] Критическая ошибка: {e}")
+        logger.error(f"│   [ FAIL ] Ошибка при извлечении аудио: {e}")
         return None
