@@ -86,7 +86,7 @@ def start_pipeline(file_path_str: str):
             engine_name = cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').upper()
             logging.info(f"│   [ STEP 2/4 ] Транскрибация ({engine_name})...")
             # Обновляем txt_path, если функция возвращает новый путь
-            txt_path = Path(transcribe_audio(str(wav_path), output_path=str(txt_path)))
+            txt_path = Path(transcribe_audio(str(wav_path)))
 
         # Очистка аудио сразу после транскрибации (экономим место)
         if wav_path and wav_path.exists():
@@ -114,6 +114,7 @@ def start_pipeline(file_path_str: str):
         # ГАРАНТИРОВАННАЯ ОЧИСТКА
         if wav_path and wav_path.exists():
             wav_path.unlink()
+            logging.info(f"│   [ CLEAN ] Удален временный WAV")
         
         if lock_path.exists():
             cleanup_locks(str(lock_path))
