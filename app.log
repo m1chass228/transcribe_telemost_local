@@ -1,0 +1,173 @@
+2026-05-08 10:35:31,336 [INFO] root: Логирование настроено (Level: INFO)
+2026-05-08 10:35:31,336 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:35:31,336 [INFO] root: ✨ Активных 'мертвых' замков не найдено.
+2026-05-08 10:36:17,326 [INFO] root: Логирование настроено (Level: DEBUG)
+2026-05-08 10:36:17,326 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:36:17,326 [INFO] root: ✨ Активных 'мертвых' замков не найдено.
+2026-05-08 10:36:17,326 [INFO] root: │   [ SRVC ] Мониторинг запущен: /Users/olegbespalov/Documents/Телемост
+2026-05-08 10:36:17,330 [INFO] root: ╒══ СТАРТ: Встреча в Телемосте 31.03.26 12-11-59 — запись.webm
+2026-05-08 10:36:17,330 [INFO] root: │   [ STEP 1/4 ] Извлечение аудио...
+2026-05-08 10:36:17,330 [INFO] src.audio: ╒══ Извлечение аудио
+2026-05-08 10:36:17,330 [INFO] src.audio: │   Source: Встреча в Телемосте 31.03.26 12-11-59 — запись.webm
+2026-05-08 10:36:17,342 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись.webm.lock", inode=14760138, flags=11100, id=119126515): is_created, is_file, is_modified
+2026-05-08 10:36:17,342 [DEBUG] fsevents: queue_event FileCreatedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись.webm.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:17,343 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:17,343 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись.webm.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:17,397 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav", inode=14760139, flags=10100, id=119126518): is_created, is_file
+2026-05-08 10:36:17,397 [DEBUG] fsevents: queue_event FileCreatedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:17,397 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:29,081 [INFO] src.audio: │   [ DONE ] WAV готов (238.72 MB)
+2026-05-08 10:36:29,085 [INFO] src.audio: ┕━━ Путь: Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav
+2026-05-08 10:36:29,085 [INFO] root: │   [ STEP 2/4 ] Транскрибация (GIGAAM)...
+2026-05-08 10:36:29,085 [ERROR] root: │   [ CRIT ] Ошибка пайплайна: transcribe_audio() got an unexpected keyword argument 'output_path'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 89, in start_pipeline
+    txt_path = Path(transcribe_audio(str(wav_path), output_path=str(txt_path)))
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: transcribe_audio() got an unexpected keyword argument 'output_path'
+2026-05-08 10:36:29,093 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:36:29,093 [ERROR] root: │   [ CRIT ] Ошибка в воркере: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись.webm.lock'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/main.py", line 28, in worker
+    start_pipeline(str(file_path))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 119, in start_pipeline
+    cleanup_locks(str(lock_path))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/utils/lock.py", line 21, in cleanup_locks
+    for f in os.listdir(input_dir):
+             ~~~~~~~~~~^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись.webm.lock'
+2026-05-08 10:36:29,093 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav", inode=14760139, flags=11100, id=119126633): is_created, is_file, is_modified
+2026-05-08 10:36:29,094 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:29,098 [INFO] root: ╒══ СТАРТ: Встреча в Телемосте 17.02.26 12-07-22 — запись.webm
+2026-05-08 10:36:29,098 [INFO] root: │   [ STEP 1/4 ] Извлечение аудио...
+2026-05-08 10:36:29,098 [INFO] src.audio: ╒══ Извлечение аудио
+2026-05-08 10:36:29,098 [INFO] src.audio: │   Source: Встреча в Телемосте 17.02.26 12-07-22 — запись.webm
+2026-05-08 10:36:29,105 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav", inode=14760139, flags=11300, id=119126636): is_coalesced, is_created, is_file, is_modified, is_removed
+2026-05-08 10:36:29,105 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись.webm.lock", inode=14760146, flags=11100, id=119126642): is_created, is_file, is_modified
+2026-05-08 10:36:29,105 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:29,105 [DEBUG] fsevents: queue_event FileDeletedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 31.03.26 12-11-59 — запись_temp.wav', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:29,105 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:29,105 [DEBUG] fsevents: queue_event FileCreatedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись.webm.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:29,105 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:29,105 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись.webm.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:29,137 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav", inode=14760147, flags=10100, id=119126645): is_created, is_file
+2026-05-08 10:36:29,137 [DEBUG] fsevents: queue_event FileCreatedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:29,137 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:42,481 [INFO] src.audio: │   [ DONE ] WAV готов (274.03 MB)
+2026-05-08 10:36:42,485 [INFO] src.audio: ┕━━ Путь: Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav
+2026-05-08 10:36:42,486 [INFO] root: │   [ STEP 2/4 ] Транскрибация (GIGAAM)...
+2026-05-08 10:36:42,486 [ERROR] root: │   [ CRIT ] Ошибка пайплайна: transcribe_audio() got an unexpected keyword argument 'output_path'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 89, in start_pipeline
+    txt_path = Path(transcribe_audio(str(wav_path), output_path=str(txt_path)))
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: transcribe_audio() got an unexpected keyword argument 'output_path'
+2026-05-08 10:36:42,493 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:36:42,493 [ERROR] root: │   [ CRIT ] Ошибка в воркере: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись.webm.lock'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/main.py", line 28, in worker
+    start_pipeline(str(file_path))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 119, in start_pipeline
+    cleanup_locks(str(lock_path))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/utils/lock.py", line 21, in cleanup_locks
+    for f in os.listdir(input_dir):
+             ~~~~~~~~~~^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись.webm.lock'
+2026-05-08 10:36:42,493 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav", inode=14760147, flags=11000, id=119126742): is_file, is_modified
+2026-05-08 10:36:42,494 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:42,497 [INFO] root: ╒══ СТАРТ: Встреча в Телемосте 24.03.26 12-24-49 — запись.webm
+2026-05-08 10:36:42,497 [INFO] root: │   [ STEP 1/4 ] Извлечение аудио...
+2026-05-08 10:36:42,497 [INFO] src.audio: ╒══ Извлечение аудио
+2026-05-08 10:36:42,497 [INFO] src.audio: │   Source: Встреча в Телемосте 24.03.26 12-24-49 — запись.webm
+2026-05-08 10:36:42,505 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav", inode=14760147, flags=11200, id=119126745): is_file, is_modified, is_removed
+2026-05-08 10:36:42,505 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись.webm.lock", inode=14760155, flags=11100, id=119126751): is_created, is_file, is_modified
+2026-05-08 10:36:42,505 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:42,505 [DEBUG] fsevents: queue_event FileDeletedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 17.02.26 12-07-22 — запись_temp.wav', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:42,505 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:42,505 [DEBUG] fsevents: queue_event FileCreatedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись.webm.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:42,505 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:42,505 [DEBUG] fsevents: queue_event FileModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись.webm.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:42,552 [DEBUG] fsevents: NativeEvent(path="/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись_temp.wav", inode=14760156, flags=10100, id=119126754): is_created, is_file
+2026-05-08 10:36:42,552 [DEBUG] fsevents: queue_event FileCreatedEvent(src_path='/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись_temp.wav', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2026-05-08 10:36:42,552 [DEBUG] fsevents: queue_event DirModifiedEvent(src_path='/Users/olegbespalov/Documents/Телемост', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2026-05-08 10:36:45,779 [INFO] root: │   [ SRVC ] Остановка мониторинга...
+2026-05-08 10:36:45,780 [ERROR] src.audio: │   [ FAIL ] FFmpeg: Exiting normally, received signal 2.
+2026-05-08 10:36:45,780 [ERROR] root: │   [ CRIT ] Ошибка пайплайна: FFmpeg не вернул путь к WAV файлу
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 77, in start_pipeline
+    raise RuntimeError("FFmpeg не вернул путь к WAV файлу")
+RuntimeError: FFmpeg не вернул путь к WAV файлу
+2026-05-08 10:36:45,784 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:36:45,784 [ERROR] root: │   [ CRIT ] Ошибка в воркере: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись.webm.lock'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/main.py", line 28, in worker
+    start_pipeline(str(file_path))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 119, in start_pipeline
+    cleanup_locks(str(lock_path))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/utils/lock.py", line 21, in cleanup_locks
+    for f in os.listdir(input_dir):
+             ~~~~~~~~~~^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 24.03.26 12-24-49 — запись.webm.lock'
+2026-05-08 10:36:45,787 [INFO] root: ╒══ СТАРТ: Встреча в Телемосте 07.04.26 12-13-07 — запись.webm
+2026-05-08 10:36:45,787 [INFO] root: │   [ STEP 1/4 ] Извлечение аудио...
+2026-05-08 10:36:45,788 [INFO] src.audio: ╒══ Извлечение аудио
+2026-05-08 10:36:45,788 [INFO] src.audio: │   Source: Встреча в Телемосте 07.04.26 12-13-07 — запись.webm
+2026-05-08 10:36:50,794 [INFO] src.audio: │   [ DONE ] WAV готов (102.87 MB)
+2026-05-08 10:36:50,795 [INFO] src.audio: ┕━━ Путь: Встреча в Телемосте 07.04.26 12-13-07 — запись_temp.wav
+2026-05-08 10:36:50,796 [INFO] root: │   [ STEP 2/4 ] Транскрибация (GIGAAM)...
+2026-05-08 10:36:50,796 [ERROR] root: │   [ CRIT ] Ошибка пайплайна: transcribe_audio() got an unexpected keyword argument 'output_path'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 89, in start_pipeline
+    txt_path = Path(transcribe_audio(str(wav_path), output_path=str(txt_path)))
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: transcribe_audio() got an unexpected keyword argument 'output_path'
+2026-05-08 10:36:50,800 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:36:50,800 [ERROR] root: │   [ CRIT ] Ошибка в воркере: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 07.04.26 12-13-07 — запись.webm.lock'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/main.py", line 28, in worker
+    start_pipeline(str(file_path))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 119, in start_pipeline
+    cleanup_locks(str(lock_path))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/utils/lock.py", line 21, in cleanup_locks
+    for f in os.listdir(input_dir):
+             ~~~~~~~~~~^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 07.04.26 12-13-07 — запись.webm.lock'
+2026-05-08 10:36:50,804 [INFO] root: ╒══ СТАРТ: Встреча в Телемосте 02.04.26 09-05-46 — запись.webm
+2026-05-08 10:36:50,804 [INFO] root: │   [ STEP 1/4 ] Извлечение аудио...
+2026-05-08 10:36:50,804 [INFO] src.audio: ╒══ Извлечение аудио
+2026-05-08 10:36:50,804 [INFO] src.audio: │   Source: Встреча в Телемосте 02.04.26 09-05-46 — запись.webm
+2026-05-08 10:37:01,146 [INFO] src.audio: │   [ DONE ] WAV готов (212.54 MB)
+2026-05-08 10:37:01,149 [INFO] src.audio: ┕━━ Путь: Встреча в Телемосте 02.04.26 09-05-46 — запись_temp.wav
+2026-05-08 10:37:01,149 [INFO] root: │   [ STEP 2/4 ] Транскрибация (GIGAAM)...
+2026-05-08 10:37:01,149 [ERROR] root: │   [ CRIT ] Ошибка пайплайна: transcribe_audio() got an unexpected keyword argument 'output_path'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 89, in start_pipeline
+    txt_path = Path(transcribe_audio(str(wav_path), output_path=str(txt_path)))
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: transcribe_audio() got an unexpected keyword argument 'output_path'
+2026-05-08 10:37:01,153 [INFO] root: 🧹 Проверка 'зависших' lock-файлов...
+2026-05-08 10:37:01,153 [ERROR] root: │   [ CRIT ] Ошибка в воркере: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 02.04.26 09-05-46 — запись.webm.lock'
+Traceback (most recent call last):
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/main.py", line 28, in worker
+    start_pipeline(str(file_path))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/src/pipeline.py", line 119, in start_pipeline
+    cleanup_locks(str(lock_path))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/olegbespalov/transcribe_local/transcribe_telemost_local/utils/lock.py", line 21, in cleanup_locks
+    for f in os.listdir(input_dir):
+             ~~~~~~~~~~^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/Users/olegbespalov/Documents/Телемост/Встреча в Телемосте 02.04.26 09-05-46 — запись.webm.lock'
+2026-05-08 10:37:01,157 [INFO] root: ╒══ СТАРТ: Встреча в Телемосте 27.04.26 13-19-26 — запись.webm
+2026-05-08 10:37:01,157 [INFO] root: │   [ STEP 1/4 ] Извлечение аудио...
+2026-05-08 10:37:01,157 [INFO] src.audio: ╒══ Извлечение аудио
+2026-05-08 10:37:01,157 [INFO] src.audio: │   Source: Встреча в Телемосте 27.04.26 13-19-26 — запись.webm
+2026-05-08 10:37:06,587 [ERROR] src.audio: │   [ FAIL ] FFmpeg: Exiting normally, received signal 2.

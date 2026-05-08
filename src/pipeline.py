@@ -12,7 +12,7 @@ from src.output import write_output
 
 from utils.database import get_file_hash, is_already_processed, mark_as_processed
 from utils.config_loader import cfg
-from utils.lock import create_lock, remove_lock
+from utils.lock import create_lock, cleanup_locks
 
 def _parse_date(file_path: Path) -> datetime.datetime:
     """Вспомогательная функция для определения даты встречи."""
@@ -116,4 +116,4 @@ def start_pipeline(file_path_str: str):
             wav_path.unlink()
         
         if lock_path.exists():
-            remove_lock(str(lock_path))
+            cleanup_locks(str(lock_path))

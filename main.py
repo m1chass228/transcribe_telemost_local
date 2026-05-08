@@ -12,7 +12,6 @@ from watchdog.events import FileSystemEventHandler
 from utils.config_loader import cfg
 from utils.lock import cleanup_locks
 from utils.logs import setup_logging
-from utils.file import wait_for_file_stability
 
 from src.pipeline import start_pipeline
 
