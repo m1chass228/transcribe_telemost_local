@@ -1,17 +1,25 @@
 # main.py
 import os
 import time
-import hashlib
-import json
 import logging
+import argparse
+import datetime
+import re
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from src.config_loader import cfg
 from src.audio import extract_audio
-from src.transcribe import transcribe_audio     # ← ИЗМЕНЕНО
+from src.transcribe import transcribe_audio    
 from src.analyzer import analyze_meeting
-from src.excel_gen import write_to_excel
+from src.output import write_output
+
+from utils.database import get_file_hash, is_already_processed, mark_as_processed
+from utils.config_loader import cfg
+from utils.lock import create_lock, cleanup_locks, remove_lock
+from utils.logs import setup_logging
+from utils.file import wait_for_file_stability
+
 
 
 # --- ЛОГИРОВАНИЕ ---
@@ -20,52 +28,6 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()]
 )
-
-
-# --- ХЕЛПЕРЫ ДЛЯ БД ОБРАБОТАННЫХ ФАЙЛОВ ---
-def get_file_hash(file_path):
-    hasher = hashlib.md5()
-    try:
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
-    except Exception as e:
-        logging.error(f"Ошибка при расчёте хеша [{file_path}]: {e}")
-        return None
-
-
-def is_already_processed(file_hash):
-    db_path = cfg.get('PATHS', 'db_path')
-    if not os.path.exists(db_path):
-        return False
-    try:
-        with open(db_path, 'r', encoding='utf-8') as f:
-            db = json.load(f)
-            return file_hash in db
-    except Exception:
-        return False
-
-
-def mark_as_processed(file_hash, filename):
-    db_path = cfg.get('PATHS', 'db_path')
-    db = {}
-
-    if os.path.exists(db_path):
-        try:
-            with open(db_path, 'r', encoding='utf-8') as f:
-                db = json.load(f)
-        except Exception:
-            db = {}
-
-    db[file_hash] = {
-        "filename": filename,
-        "processed_at": time.strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-    with open(db_path, 'w', encoding='utf-8') as f:
-        json.dump(db, f, indent=4, ensure_ascii=False)
-
 
 # --- ОСНОВНОЙ ПАЙПЛАЙН ---
 
@@ -76,128 +38,148 @@ def start_pipeline(file_path):
     """
     filename = os.path.basename(file_path)
 
+    date_match = re.search(r'(\d{2})\.(\d{2})\.(\d{2})', filename)
+    
+    if date_match:
+        day, month, year = date_match.groups()
+        # Превращаем в объект datetime (2000 + год, чтобы было 2026)
+        video_date = datetime.datetime(2000 + int(year), int(month), int(day))
+    else:
+        # Если дата в названии не найдена, берем дату создания файла
+        file_mtime = os.path.getmtime(file_path)
+        video_date = datetime.datetime.fromtimestamp(file_mtime)
+        logging.warning(f"│   [ WARN ] Дата в названии не найдена, использую дату файла: {video_date.date()}")
+
+    lock_path = file_path + ".lock"
+    if os.path.exists(lock_path):
+        logging.warning(f"│   [ BUSY ] Файл уже обрабатывается: {filename}")
+        return
+
     f_hash = get_file_hash(file_path)
     if not f_hash:
-        logging.error(f"Не удалось получить хеш, пропускаю: {filename}")
+        logging.error(f"│   [ FAIL ] Ошибка хеширования: {filename}")
         return
 
     if is_already_processed(f_hash):
-        logging.info(f"Уже обработан ранее, пропускаю: {filename}")
+        logging.info(f"│   [ SKIP ] Уже в базе: {filename}")
         return
+    
+    # Создаем lock-файл
+    create_lock(lock_path)
 
-    logging.info(f"▶ Старт обработки: {filename}")
+    logging.info(f"╒══ СТАРТ: {filename}")
     start_time = time.time()
-
     wav_path = None
 
     try:
         # ШАГ 1: Извлекаем аудио
-        logging.info("Шаг 1/4: Извлечение аудио...")
+        logging.info("│   [ STEP 1/4 ] Извлечение аудио...")
         wav_path = extract_audio(file_path)
         if not wav_path:
             raise RuntimeError("FFmpeg не вернул путь к WAV файлу")
 
-        # ШАГ 2: Транскрибируем (Whisper ИЛИ GigaAM — по конфигу)
-        logging.info(f"Шаг 2/4: Транскрибация через {cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').upper()}...")
+        # ШАГ 2: Транскрибация
+        txt_path = os.path.splitext(file_path)[0] + ".txt"
         
-        txt_path = transcribe_audio(wav_path)          # ← ИЗМЕНЕНО (унифицированный вызов)
-
-        # Удаляем временный WAV
+        if os.path.exists(txt_path):
+            logging.info(f"│   [ CACHE ] Найден готовый транскрипт, пропускаю транскрибацию.")
+        else:
+            engine_name = cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').upper()
+            logging.info(f"│   [ STEP 2/4 ] Транскрибация ({engine_name})...")
+            # Вызываем транскрибатор, который создаст txt_path
+            txt_path = transcribe_audio(wav_path, output_path=txt_path)
+        # Удаляем временный WAVs
         if os.path.exists(wav_path):
             os.remove(wav_path)
-            logging.info(f"Временный WAV удалён: {os.path.basename(wav_path)}")
-            wav_path = None
 
         # ШАГ 3: Анализ
-        logging.info("Шаг 3/4: Анализ через Ollama...")
-        analysis_results = analyze_meeting(txt_path)
+        logging.info("│   [ STEP 3/4 ] AI Анализ (Ollama)...")
+        data = analyze_meeting(txt_path)
 
         # ШАГ 4: Excel
-        logging.info("Шаг 4/4: Сохранение результата...")
-        write_to_excel(analysis_results)
+        logging.info("│   [ STEP 4/4 ] Генерация отчета...")
+        write_output(data, video_date=video_date)
 
         mark_as_processed(f_hash, filename)
 
         elapsed = (time.time() - start_time) / 60
-        logging.info(f"✅ Обработка завершена за {elapsed:.1f} мин: {filename}")
+        logging.info(f"┕━━ [ DONE ] Время: {elapsed:.1f} мин.")
 
     except Exception as e:
-        logging.error(f"❌ Ошибка при обработке [{filename}]: {e}")
-
+        logging.error(f"│   [ CRIT ] Ошибка: {e}")
         if wav_path and os.path.exists(wav_path):
             os.remove(wav_path)
-            logging.info(f"Временный WAV удалён после ошибки")
+    
+    finally:
+        remove_lock(lock_path)
 
 
 # --- WATCHDOG ---
-class TelemostHandler(FileSystemEventHandler):
-    def on_created(self, event):
-        if event.is_directory:
-            return
-        if not event.src_path.endswith(('.webm', '.mp4', '.mkv')):
-            return
+def run_watchdog(input_dir):
+    """Режим постоянного мониторинга папки"""
+    logging.info(f"│   [ SRVC ] Мониторинг запущен: {input_dir}")
+    
+    # Сначала обрабатываем то, что уже лежит в папке
+    existing = [os.path.join(input_dir, f) for f in os.listdir(input_dir) 
+                if f.endswith(('.webm', '.mp4', '.mkv'))]
+    for f_path in existing:
+        start_pipeline(f_path)
 
-        file_path = event.src_path
-        logging.info(f"✨ Обнаружен новый файл: {os.path.basename(file_path)}")
-
-        # Ждём окончания записи
-        logging.info("Жду окончания записи файла...")
-        last_size = -1
-        while True:
-            try:
-                current_size = os.path.getsize(file_path)
-            except OSError:
-                time.sleep(1)
-                continue
-
-            if current_size == last_size and current_size > 0:
-                logging.info(f"Файл готов к обработке ({current_size / 1024 / 1024:.1f} МБ)")
-                break
-
-            last_size = current_size
-            time.sleep(2)
-
-        start_pipeline(file_path)
-
-
-# --- ТОЧКА ВХОДА ---
-if __name__ == "__main__":
-    input_dir = cfg.get('PATHS', 'input_folder')
-
-    if not os.path.exists(input_dir):
-        logging.error(f"Папка для мониторинга не найдена: {input_dir}")
-        exit(1)
-
-    logging.info("🤖 AI-секретарь запущен")
-    logging.info(f"Движок транскрипции: {cfg.get('TRANSCRIPTION', 'engine', fallback='gigaam').upper()}")
-    logging.info(f"Слежу за папкой: {input_dir}")
-
-    # Обработка уже существующих файлов
-    existing_files = [
-        os.path.join(input_dir, f)
-        for f in os.listdir(input_dir)
-        if f.endswith(('.webm', '.mp4', '.mkv'))
-    ]
-
-    if existing_files:
-        logging.info(f"Найдено {len(existing_files)} существующих файлов...")
-        for f_path in existing_files:
-            start_pipeline(f_path)
-
-    # Запуск мониторинга
     handler = TelemostHandler()
     observer = Observer()
     observer.schedule(handler, input_dir, recursive=False)
     observer.start()
-
-    logging.info("Режим мониторинга активен. Ctrl+C для остановки.")
-
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        logging.info("Получен сигнал остановки...")
+        logging.info("│   [ SRVC ] Остановка мониторинга...")
         observer.stop()
-
     observer.join()
-    logging.info("AI-секретарь остановлен.")
+
+class TelemostHandler(FileSystemEventHandler):
+    def on_created(self, event):
+        # Проверяем расширение
+        if not event.is_directory and event.src_path.lower().endswith(('.webm', '.mp4', '.mkv')):
+            # Ждем стабилизации файла перед стартом пайплайна
+            if wait_for_file_stability(event.src_path):
+                start_pipeline(event.src_path)
+            else:
+                logging.error(f"│   [ FAIL ] Файл исчез или недоступен: {event.src_path}")
+
+# --- ТОЧКА ВХОДА ---
+def main():
+    parser = argparse.ArgumentParser(description="AI-секретарь для обработки записей встреч")
+    
+    # Создаем группу, чтобы нельзя было запустить одновременно файл и папку
+    group = parser.add_mutually_exclusive_group()
+    
+    group.add_argument("-f", "--file", type=str, help="Путь к конкретному файлу для обработки")
+    group.add_argument("-w", "--watch", action="store_true", help="Запустить в режиме мониторинга папки (из конфига)")
+
+    parser.add_argument("--debug", action="store_true", help="Включить отладочные логи")
+    parser.add_argument("--trace", action="store_true", help="Выводить полные ответы нейросети")
+    
+    args = parser.parse_args()
+
+    setup_logging(debug_mode=args.debug, trace_ai=args.trace)
+
+    input_dir = cfg.get('PATHS', 'input_folder')
+    cleanup_locks(input_dir)
+
+    if args.file:
+        # Режим одного файла
+        if os.path.exists(args.file):
+            start_pipeline(args.file)
+        else:
+            logging.error(f"│   [ FAIL ] Файл не найден: {args.file}")
+    elif args.watch:
+        # Режим мониторинга
+        input_dir = cfg.get('PATHS', 'input_folder')
+        run_watchdog(input_dir)
+    else:
+        # Если запустили без аргументов — выводим справку
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()
