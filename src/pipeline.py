@@ -92,6 +92,8 @@ def start_pipeline(file_path_str: str):
         if wav_path and wav_path.exists():
             wav_path.unlink()
             wav_path = None
+        
+        logging.info(f"│   [ INFO ] Текст сохранен в: {txt_path.absolute()}")
 
         # ШАГ 3: Анализ
         logging.info("│   [ STEP 3/4 ] AI Анализ (Ollama)...")

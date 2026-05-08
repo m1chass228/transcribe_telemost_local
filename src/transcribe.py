@@ -63,7 +63,6 @@ def clean_transcript(txt_path: Path):
 
 def run_gigaam(wav_path: Path) -> Path:
     txt_path = wav_path.with_suffix(".txt")
-    # Путь к воркеру относительно текущего файла
     worker_script = Path(__file__).parent / '_gigaam_worker.py'
 
     if not worker_script.exists():
@@ -72,32 +71,50 @@ def run_gigaam(wav_path: Path) -> Path:
     hf_token = cfg.get('GIGAAM', 'hf_token', fallback="")
     model_revision = cfg.get('GIGAAM', 'model', fallback='e2e_rnnt')
     
-    # Передаем только нужные переменные окружения
     env = os.environ.copy()
     env.update({'HF_TOKEN': hf_token, 'GIGAAM_REVISION': model_revision})
 
     logger.info(f"╒══ Запуск GigaAM (Subprocess)")
     
     try:
-        # Для 2-часовых файлов ставим большой timeout или убираем его
-        subprocess.run(
+        # 1. Запуск процесса
+        result = subprocess.run(
             [sys.executable, str(worker_script), str(wav_path), str(txt_path)],
-            check=True, env=env, capture_output=True, text=True
+            check=True, 
+            env=env, 
+            capture_output=True, 
+            text=True
         )
         
-        # ОСВОБОЖДЕНИЕ ПАМЯТИ: важный костыль для систем с 8ГБ RAM
-        # Даем ОС время очистить кэш после закрытия процесса воркера
-        time.sleep(2) 
-
-        if not txt_path.exists() or txt_path.stat().st_size == 0:
-            raise RuntimeError("Файл транскрипции пуст или не создан")
-
-        clean_transcript(txt_path)
-        return txt_path
+        logger.info("│   [ OK ] GigaAM завершил работу")
+        if result.stdout:
+            logger.debug(f"GigaAM Output: {result.stdout}")
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"│   [ FAIL ] GigaAM Error Output: {e.stderr}")
+        # Сюда попадаем, если GigaAM вернул ошибку (код не 0)
+        logger.error(f"│   [ FAIL ] GigaAM рухнул с кодом {e.returncode}")
+        logger.error(f"│   [ STDERR ]: {e.stderr}")
+        raise # Пробрасываем ошибку выше в pipeline.py
+        
+    except Exception as e:
+        # Сюда попадаем при любых других проблемах (нехватка памяти, нет прав и т.д.)
+        logger.error(f"│   [ CRIT ] Общая ошибка выполнения: {e}")
         raise
+
+    # --- ВСЁ, ЧТО НИЖЕ, ВЫПОЛНИТСЯ ТОЛЬКО ЕСЛИ НЕТ ОШИБОК ---
+    
+    # Даем системе "выдохнуть" после тяжелой модели
+    time.sleep(2) 
+
+    # Проверка результата
+    if not txt_path.exists() or txt_path.stat().st_size == 0:
+        logger.error(f"│   [ FAIL ] Файл транскрипции не найден или пуст: {txt_path}")
+        raise RuntimeError("Файл транскрипции пуст или не создан")
+
+    # Чистка текста
+    clean_transcript(txt_path)
+    
+    return txt_path
 
 def run_whisper(wav_path, bin_path, model_path):
     output_prefix = wav_path.rsplit('.', 1)[0]

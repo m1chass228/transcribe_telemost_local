@@ -51,7 +51,7 @@ def write_output(data, video_date=None):
     logger.info(f"┕━━ Всего задач: {len(rows)}")
 
     # 2. Excel
-    if cfg.getboolean('OUTPUT', 'enable_excel', fallback=True):
+    if str(cfg.get('OUTPUT', 'enable_excel', fallback='True')).lower() in ('true', '1', 'yes', 'on'):
         _write_to_excel(rows, video_date)
 
     # 3. JSON Debug

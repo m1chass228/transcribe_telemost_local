@@ -1,0 +1,541 @@
+[
+  {
+    "task": "Проверить отчет по инкассации",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Перепроверить аппарат для проверки купюр в филиале",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к Васильченко по поводу выплаты зарплаты",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить запись на консультацию ратолога",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить отчет по вакцинации",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Переслать сообщение о Мочёло",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Спросить, как прошло дело с пациентами",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Поменять схему оплаты через предприятие",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Спросить, кто не приходил на прием к ней в течение полугода",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить качество первого ветеринарного центра",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Составить график для отпуска Волчкова",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Предупредить Волчкова о предстоящем отпуске и сроке",
+    "assignee": "unknown",
+    "assignee_code": "N",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить с Михаилом Смирновым ситуацию с зарплатой его жены",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Провести совещание по вопросу отпуска Волчкова",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Спросить у Алины, когда она получила карту",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Получить карты с 1 ноября по 28 апреля",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Спросить у Алины, когда она получила отпуск Олега Евгеньевича",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить запись на диктофоне Ульяны",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Спросить Таисию, где у неё есть записи на диктофоне или камере",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Найти замену для Волчкова",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Провести собрание с участием Волчкова",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Определить зарплату для нового врача",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к Полине и уточнить, почему собака не была оперирована",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить зарплаты Михаила после его повышения на 7000 рублей",
+    "assignee": "unknown",
+    "assignee_code": "MN",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Связаться с Елизаветой Сергеевной и сообщить ей о необходимости внесения остатка 40 000 ₽ до первого числа",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить отчет по чекапам на 18-е число, как это было раньше (март-апрель)",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Создать чек-лист для проверки протоколов УЗИ и рентгеновских исследований",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к Ласиченко о выплате заработной платы",
+    "assignee": "unknown",
+    "assignee_code": "MN",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Провести дистанционную конференцию с Зумом по ситуации с Боратуновой и её подругой",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к Сергеевне для предоставления информации о вебинаре",
+    "assignee": "unknown",
+    "assignee_code": "MN",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить правильность заключения рентгеновских исследований и УЗИ",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к Антону для анализа описания УЗИ и рентгеновских исследований",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить отчет по вакцинации",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Связаться с Сергеем Ивановичем Савиным для получения дополнительной информации о поддержке Вета Алиса",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к руководителю колл-центра по поводу обработки жалоб и конфликтов в клинике Доктор Хак",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Собрать совещание с руководством для решения проблемы с переводом звонков",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить вопрос оценки сайта на конференции в Беларуси",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить объёмные фотографии на Яндекс.Картах",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Удалить старые фотографии животных без перчаток с Яндекс.Карт",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить и устранить критические замечания по сайтам в Яндекс.Бизнесе и Google Carta",
+    "assignee": "unknown",
+    "assignee_code": "N",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Напомнить главному врачу о необходимости дублировать информацию по отзывам",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Предложить использовать алгоритм работы с отзывами, который был выработан и записан на бумаге",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к главному врачу для уточнения сроков ответа на отзывы от клиента (24 рабочих часа)",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Предложить использовать чат для определения типа отзыва и дальнейшей работы",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратиться к главному врачу с просьбой о предоставлении положительного отзыва на сайте от сотрудников, фигурирующих в отзыве",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Предложить использовать дополнительные документы для уточнения информации по отзывам",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить всех администраторов насколько правильно они ставят записи",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Склад: Вернуться к старой схеме работы, где ассистент берёт ключ и закрывает дверь склада",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Приостановить отправку фотографий пациентов в чат для обмена информацией между собой",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить отчет по вакцинации",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить с Лизой Сергеевной вопрос о повторном приеме",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить отчет по анализам УЗИ",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить с Екатериной Сергеевой и администратором вопрос о повторном приеме пациентов без анализа",
+    "assignee": "unknown",
+    "assignee_code": "ES MN",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Созвониться с Екатериной Сергеевной и администратором обсудить задачу",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить с ассистентами возможности вставки рекомендаций задним числом",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Создать чат с сотрудниками филиала Коломенское",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Создать группу в Максе для всех сотрудников и написать ПВЦ Коломенское общий",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Создать чат с сотрудниками филиала Коломенское и переименовать ПВЦ в администраторы",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Разобраться с пропажей вакцин и рассчитать стоимость",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Составить обязанности для уборщицы работы в работе проверить работу инстратора по звонкам",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Получить обратную связь от каждого врача по задаче отзвонов. Единолично обращаюсь с ними.",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Создать чаты филиалов и каналов оповещения в MAXS",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Провести встречу Пролину и по её зарплате",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить с Полиной условия её заработной платы",
+    "assignee": "unknown",
+    "assignee_code": "N",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Провести встречу с Пролином и обсудить его зарплату",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обсудить условия заработной платы Полины",
+    "assignee": "unknown",
+    "assignee_code": "N",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Сформировать график встреч с сотрудниками",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Создать чек-лист для проверки филиала",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить чек-лист по вакцинации и убедиться, что все необходимые пункты выполнены",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Разработать схему контроля для использования ведшей",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратить внимание на то, что ветошь является основным материалом уборки и внедрить её использование в стационаре",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить наличие ветоши в каждом кабинете и обеспечить её доступность для персонала",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Обратить внимание на то, что люди не знают, где находится ветошь и внедрить систему контроля за её использованием",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Проверить стационарный бейджик дизайн",
+    "assignee": "unknown",
+    "assignee_code": "EKS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Собрать контейнеры для отходов без крышек",
+    "assignee": "unknown",
+    "assignee_code": "NS",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Подождите, когда у вас отпуск?",
+    "assignee": "unknown",
+    "assignee_code": "unknown",
+    "details": "",
+    "deadline": null
+  },
+  {
+    "task": "Напоминаю, да, я на прошлом совещании тоже об этом говорил",
+    "assignee": "unknown",
+    "assignee_code": "ES",
+    "details": "",
+    "deadline": null
+  }
+]

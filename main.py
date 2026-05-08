@@ -32,6 +32,29 @@ def worker():
             processing_queue.task_done()
 
 # --- WATCHDOG ---
+class TelemostHandler(FileSystemEventHandler):
+    """Обработчик событий создания новых файлов"""
+    def on_created(self, event):
+        if event.is_directory:
+            return
+        
+        path = Path(event.src_path)
+        
+        # Пропускаем временные файлы и логи самого процесса
+        if path.suffix.lower() in ('.lock', '.wav', '.txt', '.tmp'):
+            return
+
+        # Обрабатываем только видео-контейнеры
+        if path.suffix.lower() in ('.webm', '.mp4', '.mkv'):
+            # Дополнительная проверка: если замок уже существует, значит файл в работе
+            lock_file = path.with_suffix(path.suffix + '.lock')
+            if lock_file.exists():
+                logging.debug(f"│   [ SKIP ] Файл уже обрабатывается: {path.name}")
+                return
+
+            logging.info(f"│   [ NEW  ] Обнаружен файл: {path.name}")
+            processing_queue.put(path)
+
 def run_watchdog(input_dir):
     """Режим постоянного мониторинга папки"""
     input_path = Path(input_dir)
@@ -42,7 +65,19 @@ def run_watchdog(input_dir):
     t.start()
 
     # Сначала обрабатываем то, что уже лежит в папке
-    existing = [p for p in input_path.iterdir() if p.suffix.lower() in ('.webm', '.mp4', '.mkv')]
+    # Исключаем файлы, у которых уже есть .lock замок
+    valid_suffixes = ('.webm', '.mp4', '.mkv')
+    existing = []
+    
+    for p in input_path.iterdir():
+        if p.suffix.lower() in valid_suffixes:
+            lock_file = p.with_suffix(p.suffix + '.lock')
+            # Берем только те, которые еще не заблокированы
+            if not lock_file.exists():
+                existing.append(p)
+            else:
+                logging.info(f"│   [ SKIP ] Файл уже в процессе (найден lock): {p.name}")
+
     for f_path in existing:
         processing_queue.put(f_path)
 
@@ -56,21 +91,10 @@ def run_watchdog(input_dir):
             time.sleep(1)
     except KeyboardInterrupt:
         logging.info("│   [ SRVC ] Остановка мониторинга...")
-        processing_queue.put(None) # Сигнал воркеру на выход
+        processing_queue.put(None)
         observer.stop()
     observer.join()
     t.join()
-
-class TelemostHandler(FileSystemEventHandler):
-    def on_created(self, event):
-        if event.is_directory:
-            return
-        
-        path = Path(event.src_path)
-        if path.suffix.lower() in ('.webm', '.mp4', '.mkv'):
-            logging.info(f"│   [ NEW  ] Обнаружен файл: {path.name}")
-            # Добавляем в очередь
-            processing_queue.put(path)
 
 # --- ТОЧКА ВХОДА ---
 def main():
